@@ -22,6 +22,8 @@
 
 *.cfg
 !cfg/yolov3*.cfg
+!custom/*.cfg
+!custom/*.data
 
 storage.googleapis.com
 runs/*

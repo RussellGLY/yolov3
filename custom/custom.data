@@ -1,0 +1,4 @@
+classes=45
+train=custom/train.txt
+valid=custom/valid.txt
+names=custom/custom.names
