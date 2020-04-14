@@ -1,3 +1,4 @@
+import convlstm
 import torch.nn.functional as F
 
 from utils.google_utils import *
@@ -15,7 +16,6 @@ def create_modules(module_defs, img_size):
     module_list = nn.ModuleList()
     routs = []  # list of layers which rout to deeper layers
     yolo_index = -1
-    rnn_index = -1
     for i, mdef in enumerate(module_defs):
         modules = nn.Sequential()
         # if i == 0:
@@ -75,11 +75,19 @@ def create_modules(module_defs, img_size):
         elif mdef['type'] == 'reorg3d':  # yolov3-spp-pan-scale
             pass
 
-        
-        elif mdef['type']=='rnn':
-            rnn_index += 1
-            l = mdef['from'] if 'from' in mdef else []
-            modules = RNNLayer(rnn_index, l, input_dim=mdef['input_dim'],hidden_dim=mdef['hidden_dim'])
+        elif mdef['type']=='convlstm':
+            bidirectional = bool(mdef['bidirectional']) if 'bidirectional' in mdef else False,
+            hidden_chans = mdef['hidden']
+            filters = hidden_chans * 2 if bidirectional else hidden_chans
+            modules = convlstm.ConvLSTM(
+                in_chans = output_filters[-1],
+                hidden_chans = hidden_chans,
+                kernel_size = mdef['size'],
+                layers = mdef['layers'] if 'layers' in mdef else 1,
+                bidirectional = bidirectional,
+                bias = bool(mdef['bias']) if 'bias' in mdef else True,
+                dropout = mdef['dropout'] if 'dropout' in mdef else None
+            )
 
         elif mdef['type'] == 'yolo':
             yolo_index += 1
@@ -175,25 +183,6 @@ class Mish(nn.Module):  # https://github.com/digantamisra98/Mish
     def forward(self, x):
         return x.mul_(F.softplus(x).tanh())
 
-class RNNLayer(nn.Module):
-    def __init__(self, rnn_index, layers, input_dim, hidden_dim):
-        super(RNNLayer, self).__init__()
-        self.rnn_index = rnn_index
-        self.layers = layers
-        self.hidden_dim = hidden_dim
-        self.input_dim = input_dim
-        self.lstm = nn.LSTM(self.input_dim, self.hidden_dim, num_layers=1, bidirectional=False)
-        #self.h_in = torch.randn(1, 1, self.hidden_dim).cuda()
-        #self.c_in = torch.randn(1, 1, self.hidden_dim).cuda()  
-    
-    def forward(self, x):
-        #print(x.shape, self.rnn_index)
-        #print(x.view(x.shape[0],1,-1).shape,self.rnn_index,self.hidden_dim,self.input_dim)
-        embed_seq = x.view(x.shape[0],1,-1) 
-        self.lstm.flatten_parameters()
-        self.h_out, self.c_out = self.lstm(embed_seq, (self.h_in, self.c_in))
-        return self.h_out
-        return x
 
 class YOLOLayer(nn.Module):
     def __init__(self, anchors, nc, img_size, yolo_index, layers):
@@ -286,7 +275,7 @@ class Darknet(nn.Module):
         self.seen = np.array([0], dtype=np.int64)  # (int64) number of images seen during training
         self.info()  # print model description
 
-    def forward(self, x, verbose=False):
+    def forward(self, x, verbose=False, seq_len=16):
         img_size = x.shape[-2:]
         yolo_out, out = [], []
         if verbose:
@@ -318,19 +307,12 @@ class Darknet(nn.Module):
                         out[layers[1]] = F.interpolate(out[layers[1]], scale_factor=[0.5, 0.5])
                         x = torch.cat([out[i] for i in layers], 1)
                     # print(''), [print(out[i].shape) for i in layers], print(x.shape)
-            elif mtype == 'rnn':
-                print(i,x.shape)
-                #yolo_out.append(module(x))
-                #print(len(yolo_out))
-                #for i in range(len(yolo_out)):
-                #    print(yolo_out[i].shape)
-                return module(x)
+            elif mtype == 'convlstm':
+                bs, chans, height, width = tuple(x.size())
+                x = x.reshape(seq_len, -1, chans, height, width)
+                x = module(x).reshape(bs, -1, height, width)
             elif mtype == 'yolo':
-                print(i, x.shape, x.view(x.shape[0],-1).shape)
                 yolo_out.append(module(x, img_size, out))
-                #print(len(yolo_out))
-                #for i in range(len(yolo_out)):
-                #    print(yolo_out[i].shape)
             out.append(x if self.routs[i] else [])
             if verbose:
                 print('%g/%g %s -' % (i, len(self.module_list), mtype), list(x.shape), str)
