@@ -41,9 +41,14 @@ class ConvLSTMUnit(nn.Module):
     self.dropout = None if dropout == None else nn.Dropout2d(dropout, inplace=True)
     self.in_chans = in_chans
     self.hidden_chans = hidden_chans
-    self.cells = [ConvLSTMCell(in_chans, hidden_chans, k, bias) for _ in range(layers)]
+    self.cells = []
     for i in range(layers):
-      self.add_module(f'cell_{i}', self.cells[i])
+      if i == 0:
+        cell = ConvLSTMCell(in_chans, hidden_chans, k, bias)
+      else:
+        cell = ConvLSTMCell(hidden_chans, hidden_chans, k, bias)
+      self.cells.append(cell)
+      self.add_module(f'cell_{i}', cell)
 
   def order(self, seq_len):
     if self.reverse:
@@ -79,9 +84,9 @@ class ConvLSTM(nn.Module):
   def forward(self, x):
     seq_len, bs, chans, height, width = tuple(x.size())
     assert(chans == self.in_chans)
-    out = torch.empty(seq_len, bs, self.out_chans, height, width).float()
-    h0 = torch.zeros(bs, self.hidden_chans, height, width).float()
-    c0 = torch.zeros(bs, self.hidden_chans, height, width).float()
+    out = torch.empty(seq_len, bs, self.out_chans, height, width, dtype=x.dtype, device=x.device)
+    h0 = torch.zeros(bs, self.hidden_chans, height, width, dtype=x.dtype, device=x.device)
+    c0 = torch.zeros(bs, self.hidden_chans, height, width, dtype=x.dtype, device=x.device)
 
     self.left_to_right(x, out[:,:,:self.hidden_chans,:,:], h0, c0)
     if self.bidirectional:
