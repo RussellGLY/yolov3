@@ -11,7 +11,8 @@ from utils.utils import *
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
-    from apex import amp
+    #from apex import amp
+    mixed_precision = False
 except:
     mixed_precision = False  # not installed
 
@@ -22,7 +23,7 @@ results_file = 'results.txt'
 
 # Hyperparameters https://github.com/ultralytics/yolov3/issues/310
 
-hyp = {'giou': 3.54,  # giou loss gain
+hyp = {'giou': 2.0,  # giou loss gain
        'cls': 37.4,  # cls loss gain
        'cls_pw': 1.0,  # cls BCELoss positive_weight
        'obj': 64.3,  # obj loss gain (*=img_size/320 if img_size != 320)
