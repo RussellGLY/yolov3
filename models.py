@@ -83,7 +83,7 @@ def create_modules(module_defs, img_size):
                 in_chans = output_filters[-1],
                 hidden_chans = hidden_chans,
                 kernel_size = mdef['size'],
-                layers = mdef['layers'] if 'layers' in mdef else 1,
+                layers = mdef['layers'][0] if 'layers' in mdef else 1,
                 bidirectional = bidirectional,
                 bias = bool(mdef['bias']) if 'bias' in mdef else True,
                 dropout = mdef['dropout'] if 'dropout' in mdef else None
@@ -309,6 +309,7 @@ class Darknet(nn.Module):
                     # print(''), [print(out[i].shape) for i in layers], print(x.shape)
             elif mtype == 'convlstm':
                 bs, chans, height, width = tuple(x.size())
+                seq_len = bs
                 x = x.reshape(seq_len, -1, chans, height, width)
                 x = module(x).reshape(bs, -1, height, width)
             elif mtype == 'yolo':
