@@ -265,6 +265,8 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                               if os.path.splitext(x)[-1].lower() in img_formats]
 
         n = len(self.img_files)
+        
+
         assert n > 0, 'No images found in %s. See %s' % (path, help_url)
         bi = np.floor(np.arange(n) / batch_size).astype(np.int)  # batch index
         nb = bi[-1] + 1  # number of batches
@@ -281,7 +283,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         # Define labels
         self.label_files = [x.replace('images', 'labels').replace(os.path.splitext(x)[-1], '.txt')
                             for x in self.img_files]
-
+        print("*****************path:",self.label_files[0]," ,",len(self.label_files))
         # Rectangular Training  https://github.com/ultralytics/yolov3/issues/232
         if self.rect:
             # Read image shapes (wh)

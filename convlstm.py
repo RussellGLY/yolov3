@@ -42,7 +42,7 @@ class ConvLSTMUnit(nn.Module):
     self.in_chans = in_chans
     self.hidden_chans = hidden_chans
     self.cells = []
-    for i in range(layers):
+    for i in layers: # changed from range(layers)
       if i == 0:
         cell = ConvLSTMCell(in_chans, hidden_chans, k, bias)
       else:

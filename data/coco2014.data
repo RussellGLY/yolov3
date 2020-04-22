@@ -1,4 +1,4 @@
 classes=80
-train=../coco/trainvalno5k.txt
-valid=../coco/5k.txt
-names=data/coco.names
+train=/home/magesh/Documents/PyTorch-YOLOv3-master_old/data/coco/trainvalno5k.txt 
+valid=/home/magesh/Documents/PyTorch-YOLOv3-master_old/data/coco/5k.txt
+names=/home/magesh/Documents/PyTorch-YOLOv3-master_old/data/coco.names
