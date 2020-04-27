@@ -41,6 +41,7 @@ class ConvLSTM(nn.Module):
     self.layers = layers
     self.in_chans = in_chans
     self.hidden_chans = hidden_chans
+    self.dropout = dropout
     self.cells = []
     for i in range(layers):
       if i == 0:

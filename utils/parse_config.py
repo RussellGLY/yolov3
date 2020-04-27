@@ -40,11 +40,7 @@ def parse_model_cfg(path):
     supported = ['type', 'batch_normalize', 'filters', 'size', 'stride', 'pad', 'activation', 'layers', 'groups',
                  'from', 'mask', 'anchors', 'classes', 'num', 'jitter', 'ignore_thresh', 'truth_thresh', 'random',
                  'stride_x', 'stride_y', 'weights_type', 'weights_normalization', 'scale_x_y', 'beta_nms', 'nms_kind',
-<<<<<<< Updated upstream
-                 'iou_loss', 'iou_normalizer', 'cls_normalizer', 'iou_thresh', 'hidden', 'bidirectional', 'bias', 'dropout']
-=======
                  'iou_loss', 'iou_normalizer', 'cls_normalizer', 'iou_thresh', 'bias', 'dropout']
->>>>>>> Stashed changes
 
     f = []  # fields
     for x in mdefs[1:]:
