@@ -10,13 +10,11 @@ WIDTH = 32
 KERNEL_SIZE=5
 LAYERS = 3
 DROPOUT = 0.5
-BIDIRECTIONAL=True
 
 size = SEQ_LEN * BATCH_SIZE * IN_CHANS * HEIGHT * WIDTH
 data = torch.arange(size).reshape(SEQ_LEN, BATCH_SIZE, IN_CHANS, HEIGHT, WIDTH).float().cuda()
-lstm = convlstm.ConvLSTM(IN_CHANS, HIDDEN_CHANS, KERNEL_SIZE, LAYERS, bidirectional=BIDIRECTIONAL, dropout=DROPOUT).cuda()
-out = lstm(data)
+lstm = convlstm.ConvLSTM(IN_CHANS, HIDDEN_CHANS, KERNEL_SIZE, LAYERS, dropout=DROPOUT).cuda()
+out = lstm(data)[0]
 
-expected_chans = HIDDEN_CHANS * 2 if BIDIRECTIONAL else HIDDEN_CHANS
-assert(tuple(out.size()) == (SEQ_LEN, BATCH_SIZE, expected_chans, HEIGHT, WIDTH))
+assert(tuple(out.size()) == (SEQ_LEN, BATCH_SIZE, HIDDEN_CHANS, HEIGHT, WIDTH))
 print(out.mean())

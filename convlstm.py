@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 # See https://papers.nips.cc/paper/5955-convolutional-lstm-network-a-machine-learning-approach-for-precipitation-nowcasting.pdf
 class ConvLSTMCell(nn.Module):
@@ -33,62 +34,51 @@ class ConvLSTMCell(nn.Module):
     ht = o*ct.tanh()
     return ht, ct
 
-class ConvLSTMUnit(nn.Module):
-  def __init__(self, in_chans, hidden_chans, k, layers, bias, dropout, reverse=False):
-    super(ConvLSTMUnit, self).__init__()
-    self.reverse = reverse
+class ConvLSTM(nn.Module):
+
+  def __init__(self, in_chans, hidden_chans, kernel_size, layers=1, bias=True, dropout=None):
+    super(ConvLSTM, self).__init__()
     self.layers = layers
-    self.dropout = None if dropout == None else nn.Dropout2d(dropout, inplace=True)
     self.in_chans = in_chans
     self.hidden_chans = hidden_chans
+    self.dropout = dropout
     self.cells = []
     for i in layers: # changed from range(layers)
       if i == 0:
-        cell = ConvLSTMCell(in_chans, hidden_chans, k, bias)
+        cell = ConvLSTMCell(in_chans, hidden_chans, kernel_size, bias)
       else:
-        cell = ConvLSTMCell(hidden_chans, hidden_chans, k, bias)
+        cell = ConvLSTMCell(hidden_chans, hidden_chans, kernel_size, bias)
       self.cells.append(cell)
-      self.add_module(f'cell_{i}', cell)
+      self.add_module(f'lstmcell{i}', cell)
 
-  def order(self, seq_len):
-    if self.reverse:
-      return reversed(range(seq_len))
-    else:
-      return range(seq_len)
-
-  def forward(self, x, out, h0, c0):
-    for layer in range(self.layers):
-      cell = self.cells[layer]
-      h, c = h0, c0
-      for i in self.order(len(x)):
-        h, c = cell(x[i], h, c)
-        out[i] = h
-      if self.dropout and layer < (self.layers - 1):
-        self.dropout(out)
-      x = out
-    return out
-
-class ConvLSTM(nn.Module):
-
-  def __init__(self, in_chans, hidden_chans, kernel_size, layers=1, bidirectional=False, bias=True, dropout=None):
-    super(ConvLSTM, self).__init__()
-    self.bidirectional = bidirectional
-    self.left_to_right = ConvLSTMUnit(in_chans, hidden_chans, kernel_size, layers, bias, dropout)
-    self.in_chans = in_chans
-    self.hidden_chans = hidden_chans
-    self.out_chans = hidden_chans
-    if bidirectional:
-      self.out_chans *= 2
-      self.right_to_left = ConvLSTMUnit(in_chans, hidden_chans, kernel_size, layers, bias, dropout, reverse=True)
-
-  def forward(self, x):
+  def forward(self, x, h0c0 = None):
+    # verify shape of input
     seq_len, bs, chans, height, width = tuple(x.size())
     assert(chans == self.in_chans)
-    out = torch.empty(seq_len, bs, self.out_chans, height, width, dtype=x.dtype, device=x.device)
-    h0 = torch.zeros(bs, self.hidden_chans, height, width, dtype=x.dtype, device=x.device)
-    c0 = torch.zeros(bs, self.hidden_chans, height, width, dtype=x.dtype, device=x.device)
 
-    self.left_to_right(x, out[:,:,:self.hidden_chans,:,:], h0, c0)
-    if self.bidirectional:
-      self.right_to_left(x, out[:,:,self.hidden_chans:,:,:], h0, c0)
-    return out
+    # initialize h, c if necessary
+    if h0c0:
+      h0, c0 = h0c0
+    else:
+      h0 = torch.zeros(self.layers, bs, self.hidden_chans, height, width, dtype=x.dtype, device=x.device)
+      c0 = torch.zeros(self.layers, bs, self.hidden_chans, height, width, dtype=x.dtype, device=x.device)
+
+    # iterate through layers and input sequence
+    newh, newc = [], []
+    for l in range(self.layers):
+      cell = self.cells[l]
+      h, c = h0[l], c0[l]
+      outs = []
+      for i in range(seq_len):
+        h, c = cell(x[i], h, c)
+        outs.append(h)
+
+      newh.append(h)
+      newc.append(c)
+      x = torch.stack(outs)
+
+      # apply dropout if configured, but not to last layer
+      if self.dropout and l < self.layers - 1:
+        x = F.dropout2d(x, self.dropout, training=self.training)
+
+    return x, (torch.stack(newh), torch.stack(newc))
