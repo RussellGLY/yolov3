@@ -182,6 +182,7 @@ class Mish(nn.Module):  # https://github.com/digantamisra98/Mish
 
 class LSTMLayer(nn.Module):
     def __init__(self, in_chans, hidden_chans, kernel_size, layers, bias, dropout):
+        super(LSTMLayer, self).__init__()
         self.h0c0 = None
         self.lstm = convlstm.ConvLSTM(in_chans, hidden_chans, kernel_size, layers, bias, dropout)
 
