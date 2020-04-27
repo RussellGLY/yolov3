@@ -76,15 +76,12 @@ def create_modules(module_defs, img_size):
             pass
 
         elif mdef['type']=='convlstm':
-            bidirectional = bool(mdef['bidirectional']) if 'bidirectional' in mdef else False,
-            hidden_chans = mdef['hidden']
-            filters = hidden_chans * 2 if bidirectional else hidden_chans
-            modules = convlstm.ConvLSTM(
+            filters = mdef['filters']
+            modules = LSTMLayer(
                 in_chans = output_filters[-1],
-                hidden_chans = hidden_chans,
+                hidden_chans = filters,
                 kernel_size = mdef['size'],
                 layers = mdef['layers'][0] if 'layers' in mdef else 1,
-                bidirectional = bidirectional,
                 bias = bool(mdef['bias']) if 'bias' in mdef else True,
                 dropout = mdef['dropout'] if 'dropout' in mdef else None
             )
@@ -183,6 +180,20 @@ class Mish(nn.Module):  # https://github.com/digantamisra98/Mish
     def forward(self, x):
         return x.mul_(F.softplus(x).tanh())
 
+class LSTMLayer(nn.Module):
+    def __init__(self, in_chans, hidden_chans, kernel_size, layers, bias, dropout):
+        self.h0c0 = None
+        self.lstm = convlstm.ConvLSTM(in_chans, hidden_chans, kernel_size, layers, bias, dropout)
+
+    def forward(self, x, seq_len, reset_lstm):
+        if reset_lstm:
+            self.h0c0 = None
+        bs, chans, height, width = tuple(x.size())
+        x = x.reshape(bs, 1, chans, height, width)
+        #x = x.reshape(seq_len, -1, chans, height, width)
+        x, self.h0c0 = self.lstm(x)
+        return x.reshape(bs, -1, height, width)
+
 
 class YOLOLayer(nn.Module):
     def __init__(self, anchors, nc, img_size, yolo_index, layers):
@@ -275,7 +286,7 @@ class Darknet(nn.Module):
         self.seen = np.array([0], dtype=np.int64)  # (int64) number of images seen during training
         self.info()  # print model description
 
-    def forward(self, x, verbose=False, seq_len=16):
+    def forward(self, x, verbose=False, seq_len=16, reset_lstm=False):
         img_size = x.shape[-2:]
         yolo_out, out = [], []
         if verbose:
@@ -308,10 +319,7 @@ class Darknet(nn.Module):
                         x = torch.cat([out[i] for i in layers], 1)
                     # print(''), [print(out[i].shape) for i in layers], print(x.shape)
             elif mtype == 'convlstm':
-                bs, chans, height, width = tuple(x.size())
-                seq_len = bs
-                x = x.reshape(seq_len, -1, chans, height, width)
-                x = module(x).reshape(bs, -1, height, width)
+                x = module(x, seq_len, reset_lstm)
             elif mtype == 'yolo':
                 yolo_out.append(module(x, img_size, out))
             out.append(x if self.routs[i] else [])
