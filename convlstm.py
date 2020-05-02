@@ -81,4 +81,4 @@ class ConvLSTM(nn.Module):
       if self.dropout and l < self.layers - 1:
         x = F.dropout2d(x, self.dropout, training=self.training)
 
-    return x, (torch.stack(newh), torch.stack(newc))
+    return x, (torch.stack(newh).detach_(), torch.stack(newc).detach_())

@@ -192,7 +192,7 @@ class LSTMLayer(nn.Module):
         bs, chans, height, width = tuple(x.size())
         x = x.reshape(bs, 1, chans, height, width)
         #x = x.reshape(seq_len, -1, chans, height, width)
-        x, self.h0c0 = self.lstm(x)
+        x, self.h0c0 = self.lstm(x, self.h0c0)
         return x.reshape(bs, -1, height, width)
 
 
