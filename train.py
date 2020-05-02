@@ -161,40 +161,36 @@ def train():
         model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
         model.yolo_layers = model.module.yolo_layers  # move yolo layer indices to top level
 
-    # Dataset
-    dataset = LoadImagesAndLabels(train_path, img_size, batch_size,
-                                  augment=True,
-                                  hyp=hyp,  # augmentation hyperparameters
-                                  rect=opt.rect,  # rectangular training
-                                  cache_images=opt.cache_images,
-                                  single_cls=opt.single_cls)
 
     # Dataloader
-    batch_size = min(batch_size, len(dataset))
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
-    dataloader = torch.utils.data.DataLoader(dataset,
-                                             batch_size=batch_size,
-                                             num_workers=nw,
-                                             shuffle=True,  # Shuffle=True unless rectangular training is used
-                                             pin_memory=True,
-                                             collate_fn=dataset.collate_fn)
+
+    dataloader = VideoDataLoader(train_path, img_size, batch_size,
+                                 augment=True,
+                                 hyp=hyp,
+                                 rect=opt.rect,
+                                 cache_images=opt.cache_images,
+                                 single_cls=opt.single_cls,
+                                 num_workers=nw,
+                                 shuffle=True,
+                                 pin_memory=True)
 
     # Testloader
-    testloader = torch.utils.data.DataLoader(LoadImagesAndLabels(test_path, img_size_test, batch_size,
-                                                                 hyp=hyp,
-                                                                 rect=True,
-                                                                 cache_images=opt.cache_images,
-                                                                 single_cls=opt.single_cls),
-                                             batch_size=batch_size,
-                                             num_workers=nw,
-                                             pin_memory=True,
-                                             collate_fn=dataset.collate_fn)
+    testloader = VideoDataLoader(test_path, img_size_test, batch_size,
+                                 augment=False,
+                                 hyp=hyp,
+                                 rect=True,
+                                 cache_images=opt.cache_images,
+                                 single_cls=opt.single_cls,
+                                 num_workers=nw,
+                                 shuffle=False,
+                                 pin_memory=True)
 
     # Model parameters
     model.nc = nc  # attach number of classes to model
     model.hyp = hyp  # attach hyperparameters to model
     model.gr = 0.0  # giou loss ratio (obj_loss = 1.0 or giou)
-    model.class_weights = labels_to_class_weights(dataset.labels, nc).to(device)  # attach class weights
+    model.class_weights = labels_to_class_weights(dataloader.labels, nc).to(device)  # attach class weights
 
     # Model EMA
     ema = torch_utils.ModelEMA(model)
@@ -228,12 +224,6 @@ def train():
             optimizer.param_groups[2]['lr'] = ps[0]
             if optimizer.param_groups[2].get('momentum') is not None:  # for SGD but not Adam
                 optimizer.param_groups[2]['momentum'] = ps[1]
-
-        # Update image weights (optional)
-        if dataset.image_weights:
-            w = model.class_weights.cpu().numpy() * (1 - maps) ** 2  # class weights
-            image_weights = labels_to_image_weights(dataset.labels, nc=nc, class_weights=w)
-            dataset.indices = random.choices(range(dataset.n), weights=image_weights, k=dataset.n)  # rand weighted idx
 
         mloss = torch.zeros(4).to(device)  # mean losses
         print(('\n' + '%10s' * 8) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls', 'total', 'targets', 'img_size'))

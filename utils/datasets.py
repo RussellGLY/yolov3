@@ -1,3 +1,4 @@
+import itertools
 import glob
 import math
 import os
@@ -11,7 +12,7 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image, ExifTags
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
 from utils.utils import xyxy2xywh, xywh2xyxy
@@ -255,19 +256,48 @@ class LoadStreams:  # multiple IP or RTSP cameras
         return 0  # 1E12 frames = 32 streams at 30 FPS for 30 years
 
 
+class VideoDataLoader(DataLoader):
+
+    def __init__(self, path, img_size, seq_len, augment, hyp, rect, cache_images, single_cls, num_workers, pin_memory, shuffle):
+        clips = np.load(path, allow_pickle=True)
+        self.dataloaders = []
+        self.labels = []
+        for i in range(len(clips)):
+            img_files = list(clips[i])
+            dataset = LoadImagesAndLabels(img_files, img_size, seq_len,
+                                          augment=augment,
+                                          hyp=hyp,
+                                          rect=rect,
+                                          cache_images=cache_images,
+                                          single_cls=single_cls)
+            self.labels += dataset.labels
+            dataloader = DataLoader(
+                dataset,
+                batch_size=seq_len,
+                num_workers=num_workers,
+                shuffle=False,
+                pin_memory=pin_memory,
+                collate_fn=dataset.collate_fn
+            )
+            self.dataloaders.append(dataloader)
+        self.shuffle = shuffle
+
+    def __len__(self):
+        return sum(list(map(len, self.dataloaders)))
+
+    def __iter__(self):
+        if self.shuffle:
+            random.shuffle(self.dataloaders)
+        return itertools.chain(*self.dataloaders)
+
+
 class LoadImagesAndLabels(Dataset):  # for training/testing
-    def __init__(self, path, img_size=416, batch_size=16, augment=False, hyp=None, rect=False, image_weights=False,
+    def __init__(self, img_files, img_size=416, batch_size=16, augment=False, hyp=None, rect=False, image_weights=False,
                  cache_labels=True, cache_images=False, single_cls=False):
-        path = str(Path(path))  # os-agnostic
-        assert os.path.isfile(path), 'File not found %s. See %s' % (path, help_url)
-        with open(path, 'r') as f:
-            self.img_files = [x.replace('/', os.sep) for x in f.read().splitlines()  # os-agnostic
-                              if os.path.splitext(x)[-1].lower() in img_formats]
-
+        self.img_files = img_files
         n = len(self.img_files)
-        
 
-        assert n > 0, 'No images found in %s. See %s' % (path, help_url)
+        assert n > 0, 'No images found. See %s' % help_url
         bi = np.floor(np.arange(n) / batch_size).astype(np.int)  # batch index
         nb = bi[-1] + 1  # number of batches
 

@@ -1,4 +1,4 @@
 classes=45
-train=custom/train.txt
-valid=custom/valid.txt
+train=custom/train.npy
+valid=custom/valid.npy
 names=custom/custom.names
