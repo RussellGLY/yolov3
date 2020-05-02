@@ -174,7 +174,7 @@ def train():
                                  single_cls=opt.single_cls,
                                  num_workers=nw,
                                  shuffle=True,
-                                 pin_memory=False)
+                                 pin_memory=True)
 
     # Testloader
     testloader = VideoDataLoader(test_path, img_size_test, batch_size,
@@ -185,7 +185,7 @@ def train():
                                  single_cls=opt.single_cls,
                                  num_workers=nw,
                                  shuffle=False,
-                                 pin_memory=False)
+                                 pin_memory=True)
 
     # Model parameters
     model.nc = nc  # attach number of classes to model
