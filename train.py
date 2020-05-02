@@ -11,7 +11,8 @@ from utils.utils import *
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
-    from apex import amp
+    #from apex import amp
+    mixed_precision = False
 except:
     mixed_precision = False  # not installed
 
@@ -22,7 +23,7 @@ results_file = 'results.txt'
 
 # Hyperparameters https://github.com/ultralytics/yolov3/issues/310
 
-hyp = {'giou': 3.54,  # giou loss gain
+hyp = {'giou': 2.0,  # giou loss gain
        'cls': 37.4,  # cls loss gain
        'cls_pw': 1.0,  # cls BCELoss positive_weight
        'obj': 64.3,  # obj loss gain (*=img_size/320 if img_size != 320)
@@ -113,7 +114,7 @@ def train():
         except KeyError as e:
             s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
                 "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights, opt.cfg, opt.weights)
-            raise KeyError(s) 
+            raise KeyError(s) from e
 
         # load optimizer
         if chkpt['optimizer'] is not None:
@@ -173,7 +174,7 @@ def train():
                                  single_cls=opt.single_cls,
                                  num_workers=nw,
                                  shuffle=True,
-                                 pin_memory=True)
+                                 pin_memory=False)
 
     # Testloader
     testloader = VideoDataLoader(test_path, img_size_test, batch_size,
@@ -184,7 +185,7 @@ def train():
                                  single_cls=opt.single_cls,
                                  num_workers=nw,
                                  shuffle=False,
-                                 pin_memory=True)
+                                 pin_memory=False)
 
     # Model parameters
     model.nc = nc  # attach number of classes to model

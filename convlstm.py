@@ -43,7 +43,7 @@ class ConvLSTM(nn.Module):
     self.hidden_chans = hidden_chans
     self.dropout = dropout
     self.cells = []
-    for i in layers: # changed from range(layers)
+    for i in range(layers):
       if i == 0:
         cell = ConvLSTMCell(in_chans, hidden_chans, kernel_size, bias)
       else:
