@@ -202,9 +202,6 @@ def train():
     # torch.autograd.set_detect_anomaly(True)
     results = (0, 0, 0, 0, 0, 0, 0)  # 'P', 'R', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification'
     t0 = time.time()
-    print("***************************************************************************************************")
-    print(model)
-    print("***************************************************************************************************")
     print('Using %g dataloader workers' % nw)
     print('Starting training for %g epochs...' % epochs)
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
@@ -258,10 +255,6 @@ def train():
             pred = model(imgs)
 
             # Compute loss
-
-            print("Predictions shape:", len(pred),pred[0].shape,pred[1].shape,pred[2].shape)
-            print("Targets shape:", len(targets),targets[0:3,:])
-            print("Images shape:", imgs.shape,imgs[0].shape)
             loss, loss_items = compute_loss(pred, targets, model)
             if not torch.isfinite(loss):
                 print('WARNING: non-finite loss, ending training ', loss_items)

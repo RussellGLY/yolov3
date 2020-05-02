@@ -313,7 +313,6 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         # Define labels
         self.label_files = [x.replace('images', 'labels').replace(os.path.splitext(x)[-1], '.txt')
                             for x in self.img_files]
-        print("*****************path:",self.label_files[0]," ,",len(self.label_files))
         # Rectangular Training  https://github.com/ultralytics/yolov3/issues/232
         if self.rect:
             # Sort by aspect ratio
