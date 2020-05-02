@@ -316,18 +316,8 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         print("*****************path:",self.label_files[0]," ,",len(self.label_files))
         # Rectangular Training  https://github.com/ultralytics/yolov3/issues/232
         if self.rect:
-            # Read image shapes (wh)
-            sp = path.replace('.txt', '.shapes')  # shapefile path
-            try:
-                with open(sp, 'r') as f:  # read existing shapefile
-                    s = [x.split() for x in f.read().splitlines()]
-                    assert len(s) == n, 'Shapefile out of sync'
-            except:
-                s = [exif_size(Image.open(f)) for f in tqdm(self.img_files, desc='Reading image shapes')]
-                np.savetxt(sp, s, fmt='%g')  # overwrites existing (if any)
-
             # Sort by aspect ratio
-            s = np.array(s, dtype=np.float64)
+            s = np.stack((np.repeat(1280., n).T, np.repeat(720., n).T), axis=1)
             ar = s[:, 1] / s[:, 0]  # aspect ratio
             i = ar.argsort()
             self.img_files = [self.img_files[i] for i in i]

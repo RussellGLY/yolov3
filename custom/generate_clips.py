@@ -7,7 +7,7 @@ TRAIN_SPLIT = 0.8
 TASKS_DIR = '../tasks'
 OUT_DIR = 'custom'
 
-BUFFER = 10
+BUFFER = 30
 CONTEXT = 30
 
 clips = []
@@ -58,5 +58,7 @@ valid_data = data[valid_clip_idxs]
 np.save(f'{OUT_DIR}/train.npy', train_data, allow_pickle=True)
 np.save(f'{OUT_DIR}/valid.npy', valid_data, allow_pickle=True)
 
-print(list(map(len, clips)))
-
+print('Training clips: ', len(train_data))
+print('Training frames: ', sum(map(len, train_data)))
+print('Validation clips: ', len(valid_data))
+print('Validation frames: ', sum(map(len, valid_data)))
