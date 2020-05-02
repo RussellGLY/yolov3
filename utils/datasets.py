@@ -1,4 +1,3 @@
-import itertools
 import glob
 import math
 import os
@@ -258,7 +257,8 @@ class LoadStreams:  # multiple IP or RTSP cameras
 
 class VideoDataLoader(DataLoader):
 
-    def __init__(self, path, img_size, seq_len, augment, hyp, rect, cache_images, single_cls, num_workers, pin_memory, shuffle):
+    def __init__(self, model, path, img_size, seq_len, augment, hyp, rect, cache_images, single_cls, num_workers, pin_memory, shuffle):
+        self.model = model
         clips = np.load(path, allow_pickle=True)
         self.dataloaders = []
         self.labels = []
@@ -288,7 +288,10 @@ class VideoDataLoader(DataLoader):
     def __iter__(self):
         if self.shuffle:
             random.shuffle(self.dataloaders)
-        return itertools.chain(*self.dataloaders)
+        for dl in self.dataloaders:
+            self.model.reset_lstm()
+            for img in iter(dl):
+                yield img
 
 
 class LoadImagesAndLabels(Dataset):  # for training/testing

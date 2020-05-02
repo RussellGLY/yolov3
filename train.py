@@ -166,7 +166,7 @@ def train():
     # Dataloader
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
 
-    dataloader = VideoDataLoader(train_path, img_size, batch_size,
+    dataloader = VideoDataLoader(model, train_path, img_size, batch_size,
                                  augment=True,
                                  hyp=hyp,
                                  rect=opt.rect,
@@ -177,7 +177,7 @@ def train():
                                  pin_memory=True)
 
     # Testloader
-    testloader = VideoDataLoader(test_path, img_size_test, batch_size,
+    testloader = VideoDataLoader(model, test_path, img_size_test, batch_size,
                                  augment=False,
                                  hyp=hyp,
                                  rect=True,

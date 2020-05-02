@@ -278,6 +278,7 @@ class Darknet(nn.Module):
     def __init__(self, cfg, img_size=(416, 416)):
         super(Darknet, self).__init__()
 
+        self.do_reset_lstm = False
         self.module_defs = parse_model_cfg(cfg)
         self.module_list, self.routs = create_modules(self.module_defs, img_size)
         self.yolo_layers = get_yolo_layers(self)
@@ -287,7 +288,10 @@ class Darknet(nn.Module):
         self.seen = np.array([0], dtype=np.int64)  # (int64) number of images seen during training
         self.info()  # print model description
 
-    def forward(self, x, verbose=False, seq_len=16, reset_lstm=False):
+    def reset_lstm(self):
+        self.do_reset_lstm = True
+
+    def forward(self, x, verbose=False, seq_len=16):
         img_size = x.shape[-2:]
         yolo_out, out = [], []
         if verbose:
@@ -320,13 +324,15 @@ class Darknet(nn.Module):
                         x = torch.cat([out[i] for i in layers], 1)
                     # print(''), [print(out[i].shape) for i in layers], print(x.shape)
             elif mtype == 'convlstm':
-                x = module(x, seq_len, reset_lstm)
+                x = module(x, seq_len, self.do_reset_lstm)
             elif mtype == 'yolo':
                 yolo_out.append(module(x, img_size, out))
             out.append(x if self.routs[i] else [])
             if verbose:
                 print('%g/%g %s -' % (i, len(self.module_list), mtype), list(x.shape), str)
                 str = ''
+
+        self.do_reset_lstm = False
 
         if self.training:  # train
             return yolo_out
