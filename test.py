@@ -60,13 +60,16 @@ def test(cfg,
 
     # Dataloader
     if dataloader is None:
-        dataset = LoadImagesAndLabels(path, img_size, batch_size, rect=True, single_cls=opt.single_cls)
         batch_size = min(batch_size, len(dataset))
-        dataloader = DataLoader(dataset,
-                                batch_size=batch_size,
-                                num_workers=min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8]),
-                                pin_memory=True,
-                                collate_fn=dataset.collate_fn)
+        dataloader = VideoDataLoader(model, path, img_size, batch_size,
+                                     augment=False,
+                                     hyp=None,
+                                     rect=True,
+                                     cache_images=opt.cache_images,
+                                     single_cls=opt.single_cls,
+                                     num_workers=min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8]),
+                                     shuffle=False,
+                                     pin_memory=True)
 
     seen = 0
     model.eval()
