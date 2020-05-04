@@ -60,7 +60,6 @@ def test(cfg,
 
     # Dataloader
     if dataloader is None:
-        batch_size = min(batch_size, len(dataset))
         dataloader = VideoDataLoader(model, path, img_size, batch_size,
                                      augment=False,
                                      hyp=None,
