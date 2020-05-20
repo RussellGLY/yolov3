@@ -1,0 +1,15 @@
+CVAT setup instructions:
+
+This worked for me on my Mac. It should also work on an EC2 instance if you prefer.
+
+1. Follow the instructions on this page: https://github.com/opencv/cvat/blob/master/cvat/apps/documentation/installation.md
+
+2. On CVAT, create a new task. For the labels, copy/paste the attached file.
+
+3. Attach the training video and click submit. This will take 15 minutes or so.
+
+4. From the actions menu, select 'upload annotations' and upload the annotations file for the video.
+
+5. Verify the annotations uploaded by viewing them within the video. You should be able to see the boxes drawn on each frame and the labels.
+
+6. From the actions menu, export your training set in the desired format (yolo, COCO, VOC, etc.). This will take an hour or so.
