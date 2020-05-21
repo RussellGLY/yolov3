@@ -20,10 +20,10 @@ The code is a modification of the [YOLOv3 implementation by Ultralytics LLC](htt
 - `weights/yolov3-spp-lstm2.pt`: Agot weights copied to double LSTM architecture
 - `weights/yolov3-spp-lstm3.pt`: Agot weights copied to triple LSTM architecture
 
-### Part 1: Baseline YOLO (non-recurrent)
+## Part 1: Baseline YOLO (non-recurrent)
 Switch to the `non-recurrent` branch.
 
-#### Dataset Formatting:
+## Dataset Formatting
 
 1. Load each annotated video into CVAT. See [CVAT/CVAT setup instructions.txt](CVAT/CVAT%20setup%20instructions.txt) for more information.
 2. Export each annotated video in YOLO format
@@ -56,7 +56,7 @@ This runs the model on an input image or video and outputs another image or vide
 - Using Apex did not improve training speed.
 - Using the `--cache-images` flag did not improve training speed.
 
-### Part 2: Recurrent YOLO
+## Part 2: Recurrent YOLO
 Switch to the `master` branch.
 
 This branch uses a hybrid shuffling mechanism and a Convolutional LSTM, as described in the paper. The ConvLSTM implementation is in [convlstm.py](convlstm.py), and incoporated into [models.py](models.py). The hybrid shuffling preprocessing is done using [generate_clips.py](generate_clips.py), which generates numpy files of train/valid paths. The data loading is done using `VideoDataLoader` in [utils/datasets.py](utils/datasets.py), which makes use of a modified version of the original `LoadImagesAndLabels` Dataset. See the paper for details on the hybrid shuffling mechanism.
