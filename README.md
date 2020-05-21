@@ -23,7 +23,7 @@ The code is a modification of the [YOLOv3 implementation by Ultralytics LLC](htt
 ## Part 1: Baseline YOLO (non-recurrent)
 Switch to the `non-recurrent` branch.
 
-## Dataset Formatting
+#### Dataset Formatting
 
 1. Load each annotated video into CVAT. See [CVAT/CVAT setup instructions.txt](CVAT/CVAT%20setup%20instructions.txt) for more information.
 2. Export each annotated video in YOLO format
