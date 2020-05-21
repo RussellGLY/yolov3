@@ -64,4 +64,38 @@ Tips:
 Part 2: Recurrent YOLO
 Switch to the "non-recurrent" branch.
 
-TODO
+This branch uses a hybrid shuffling mechanism and a Convolutional LSTM, as described in the paper. The ConvLSTM implementation is in convlstm.py, and incoporated into models.py. The hybrid shuffling preprocessing is done using generate_clips.py, which generates numpy files of train/valid paths. The data loading is done using VideoDataLoader in utils/datasets.py, which makes use of a modified version of the original LoadImagesAndLabels Dataset. See the paper for details on the hybrid shuffling mechanism.
+
+ConvLSTM and Hybrid Shuffling Files:
+- convlstm.py: convolutional lstm implementation
+- models.py: modified to incoporate convlstm
+- utils/datasets.py: added VideoDataLoader and modified LoadImagesAndLabels dataset
+- custom/train.npy: image paths for each training clip
+- custom/valid.npy: image paths for each validation clip
+- custom/custom.data: modified to refer to the above npy files
+- custom/generate_clips.py: generate train/valid clips
+
+Model configuration files:
+- custom/yolov3-spp-lstm1.cfg: model configuration for single ConvLSTM
+- custom/yolov3-spp-lstm2.cfg: model configuration for two stacked ConvLSTMs
+- custom/yolov3-spp-lstm3.cfg: model configuration for three stacked ConvLSTMs
+
+Pretrained weight files:
+These are weight files for the recurrent architectures, with all weights prior to the ConvLSTM layers copied from the best weights for the nonrecurrent architecture.
+
+- weights/yolov3-spp-lstm1.pt: initial weights for single ConvLSTM
+- weights/yolov3-spp-lstm2.pt: initial weights for two stacked ConvLSTM
+- weights/yolov3-spp-lstm3.pt: initial weights for three stacked ConvLSTM
+
+- copy_model.py: use this helper script to convert model weights for one Recurrent YOLO architecture to weights for another new architecture, by copying all weights other than those of the ConvLSTM layer. For example, this was used to generate yolov3-spp-lstm2.pt and yolov3-spp-lstm3.pt from yolov3-spp-lstm1.pt.
+
+Training/Testing/Detection:
+The training/testing/detection procedure is the same as before, but you'll want to change the model configuration to one of the mentioned cfg files and the initial weights to the matching .pt file.
+
+Notes:
+- cannot use multiple GPUs
+- takes 2 hours per epoch on a Tesla V100 GPU
+- 0% precision/recall/mAP after 30 epochs
+- see the paper for potential improvements to this architecture
+- check the conv-lstm and hybrid shuffling implementations for bugs
+- even trying to overfit on a small subset of data doesn't work; troubling
