@@ -41,7 +41,7 @@ This will train using the initial weights in weights/yolov3-spp-ultralytics.pt. 
 
 Testing:
 
-This will run the model on the validation set and output metrics.
+This will run the model on the validation set and output metrics. You can see our output in the file "Yolo Baseline Results.xlsx".
 
 Run: python test.py --cfg custom/yolov3-spp-custom.cfg --data custom/custom.data --weights weights/yolov3-spp-custom.pt --batch-size 128
 
