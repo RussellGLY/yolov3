@@ -8,9 +8,14 @@ Git Branches:
 
 Prerequisites:
 
-1. Install git-lfs to access the pretrained weights in the weights directory.
-2. Run: pip install -U -r requirements.txt
-3. See the main README.md file for more information on the YOLO implementation we have forked from.
+1. Run: pip install -U -r requirements.txt
+2. See the main README.md file for more information on the YOLO implementation we have forked from.
+3. Obtain weight files from authors (too large to put in Git)
+- weights/yolov3-spp-ultralytics.pt: pretrained COCO weights from Ultralytics
+- weights/yolov3-spp-nonrecurrent.pt: best nonrecurrent weights for Agot dataset
+- weights/yolov3-spp-lstm1.pt: Agot weights copied to single LSTM architecture
+- weights/yolov3-spp-lstm2.pt: Agot weights copied to double LSTM architecture
+- weights/yolov3-spp-lstm3.pt: Agot weights copied to triple LSTM architecture
 
 
 Part 1: Baseline YOLO (non-recurrent)
@@ -34,23 +39,23 @@ Dataset Formatting:
 
 Training:
 
-Run: python train.py --epochs 30 --batch-size 128 --accumulate 1 --cfg custom/yolov3-spp-custom.cfg --data custom/custom.data
+Run: python train.py --epochs 30 --batch-size 128 --accumulate 1 --cfg custom/yolov3-spp-nonrecurrent.cfg --data custom/custom.data
 
-This will train using the initial weights in weights/yolov3-spp-ultralytics.pt. Use the pretrained Agot weights by adding the flag "--weights weights/yolov3-spp-custom.pt". Use no initial weights with the flag "--weights ''". While training, the most recent weights are stored in "weights/last.pt" and the best weights (based on the validation set) are stored in "weights/best.pt". If you want to resume training from where it last left off, add the "--resume" flag. Other command line options can be found in yolov3/train.py.
+This will train using the initial weights in weights/yolov3-spp-ultralytics.pt. Use the pretrained Agot weights by adding the flag "--weights weights/yolov3-spp-nonrecurrent.pt". Use no initial weights with the flag "--weights ''". While training, the most recent weights are stored in "weights/last.pt" and the best weights (based on the validation set) are stored in "weights/best.pt". If you want to resume training from where it last left off, add the "--resume" flag. Other command line options can be found in yolov3/train.py.
 
 
 Testing:
 
 This will run the model on the validation set and output metrics. You can see our output in the file "Yolo Baseline Results.xlsx".
 
-Run: python test.py --cfg custom/yolov3-spp-custom.cfg --data custom/custom.data --weights weights/yolov3-spp-custom.pt --batch-size 128
+Run: python test.py --cfg custom/yolov3-spp-nonrecurrent.cfg --data custom/custom.data --weights weights/yolov3-spp-custom.pt --batch-size 128
 
 
 Detection:
 
 This runs the model on an input image or video and outputs another image or video with drawn labels and boxes. The output is stored in the "output" directory.
 
-python detect.py --cfg custom/yolov3-spp-custom.cfg --names custom/custom.names --weights weights/yolov3-spp-custom.pt --source <source video or image>
+python detect.py --cfg custom/yolov3-spp-nonrecurrent.cfg --names custom/custom.names --weights weights/yolov3-spp-custom.pt --source <source video or image>
 
 
 Tips:
