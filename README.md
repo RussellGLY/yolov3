@@ -1,6 +1,6 @@
 # Recurrent YOLO with Agot dataset
 
-This README contains instructions for running both non-recurrent and recurrent YOLO on the Agot dataset, as described in [Spatiotemporal Action Recognition on Restaurant Videos](spatiotemporal-action-recognition-on-restaurant-videos-2020.pdf).
+This README contains instructions for running both non-recurrent and recurrent YOLO on the Agot dataset, as described in [Spatiotemporal Action Recognition on Restaurant Videos](report.pdf).
 
 The code is a modification of the [YOLOv3 implementation by Ultralytics LLC](https://github.com/ultralytics/yolov3). The [original README](README-ultralytics.md) has more detailed setup instructions and information, should any problems arise with the below instructions.
 
